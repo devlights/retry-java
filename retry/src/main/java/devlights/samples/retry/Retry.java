@@ -56,6 +56,8 @@ public final class Retry {
     
     int activeRetryCount = 0;
     List<Throwable> exList = new ArrayList<Throwable>();
+    
+    boolean stopThrowException = false;
     try {
       
       for (int i = 0; i < (retryCount + 1); i++) {
@@ -64,6 +66,7 @@ public final class Retry {
           proc.run();
           
           activeRetryCount = (i + 1);
+          stopThrowException = true;
           
           break;
         } catch (Throwable ex) {
@@ -103,9 +106,10 @@ public final class Retry {
         }
       }
     } finally {
-      
-      if (!exList.isEmpty() && errorCallback == null) {
-        throw new RetryException(exList);
+      if (!stopThrowException) {
+        if (!exList.isEmpty() && errorCallback == null) {
+            throw new RetryException(exList);
+        }
       }
     }
   }
