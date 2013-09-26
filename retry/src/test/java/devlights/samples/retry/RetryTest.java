@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
@@ -56,6 +57,39 @@ public class RetryTest {
     
     // Assert
     assertThat(tmpList.size(), is(4));
+  }
+  
+  @Test
+  public void エラーが発生していてもリトライ中に処理が成功したら例外は発生しない() {
+    
+    // Arrange
+    int retryCount = 3;
+    int interval = 100;
+    
+    // Act
+    final List<Boolean> tmpList = new ArrayList<Boolean>();
+    
+    try {
+      Retry.execute(retryCount, interval, new Runnable() {
+        
+        AtomicInteger _count = new AtomicInteger();
+        
+        @Override
+        public void run() {
+          if (_count.getAndIncrement() < 3) {
+            throw new RuntimeException();
+          }
+          
+          tmpList.add(true);
+        }
+      });
+    } catch (RetryException ex) {
+      // Assert
+      fail("例外が発生している");
+    }
+    
+    // Assert
+    assertThat(tmpList.size(), is(1));
   }
   
   @Test
